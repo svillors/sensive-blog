@@ -68,9 +68,7 @@ def index(request):
         .prefetch_related('author')
     )[:5]
 
-    tags = Tag.objects.annotate(
-        tagged_posts_amount=Count('posts')).order_by('-tagged_posts_amount')
-    most_popular_tags = tags[:5]
+    most_popular_tags = Tag.objects.popular()[:5]
 
     context = {
         'most_popular_posts': [
@@ -128,9 +126,7 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     tag = Tag.objects.get(title=tag_title)
 
-    all_tags = Tag.objects.all()
-    popular_tags = sorted(all_tags, key=get_related_posts_count)
-    most_popular_tags = popular_tags[-5:]
+    most_popular_tags = Tag.objects.popular()[:5]
 
     most_popular_posts = []  # TODO. Как это посчитать?
 
