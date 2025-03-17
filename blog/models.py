@@ -1,7 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 
 
 class PostQuerySet(models.QuerySet):
@@ -15,7 +15,7 @@ class PostQuerySet(models.QuerySet):
         return most_popular_posts
 
     def fetch_with_comments_count(self):
-        posts = list(self)
+        posts = self
         posts_ids = [post.id for post in posts]
         posts_with_comments = (
             Post.objects
@@ -28,6 +28,21 @@ class PostQuerySet(models.QuerySet):
         for post in posts:
             post.comments_amount = count_for_id[post.id]
         return posts
+
+    def fetch_with_tags(self):
+        return self.prefetch_related(
+            Prefetch(
+                'tags',
+                queryset=Tag.objects.annotate(posts_with_tag=Count('posts'))
+            )
+        )
+
+    def fresh_posts(self):
+        return (
+            self
+            .annotate(comments_amount=Count('comments'))
+            .order_by('-published_at')
+        )
 
 
 class TagQuerySet(models.QuerySet):
@@ -70,6 +85,10 @@ class Post(models.Model):
 
     def get_absolute_url(self):
         return reverse('post_detail', args={'slug': self.slug})
+
+    def first_tag_title(self):
+        tags = list(self.tags.all())
+        return tags[0].title if tags else None
 
     class Meta:
         ordering = ['-published_at']
