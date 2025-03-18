@@ -15,19 +15,7 @@ class PostQuerySet(models.QuerySet):
         return most_popular_posts
 
     def fetch_with_comments_count(self):
-        posts = self
-        posts_ids = [post.id for post in posts]
-        posts_with_comments = (
-            Post.objects
-            .filter(id__in=posts_ids)
-            .annotate(comments_amount=Count('comments'))
-        )
-        ids_and_comments = posts_with_comments.values_list(
-            'id', 'comments_amount')
-        count_for_id = dict(ids_and_comments)
-        for post in posts:
-            post.comments_amount = count_for_id[post.id]
-        return posts
+        return self.annotate(comments_amount=Count('comments'))
 
     def fetch_with_tags(self):
         return self.prefetch_related(

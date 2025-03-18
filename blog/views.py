@@ -71,7 +71,6 @@ def post_detail(request, slug):
                 "comments",
                 queryset=(
                     Comment.objects
-                    .filter(post__slug=slug)
                     .select_related("author")
                 )
             ),
